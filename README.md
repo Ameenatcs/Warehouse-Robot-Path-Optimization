@@ -1,155 +1,162 @@
-# Warehouse Robot Path Optimization using Q-Learning  
+# Warehouse Robot Path Optimization Using Q-Learning
 
-###  Project Overview  
-This project implements a **Reinforcement Learning (RL)** approach for optimizing warehouse robot navigation using the **Q-learning algorithm**.  
-The system trains an autonomous robot to efficiently navigate a **20×20 warehouse grid**, picking up and dropping off items while **avoiding obstacles (shelves)**.  
+A reinforcement-learning simulation that trains a warehouse robot to navigate from a start location to a pickup point and then to a drop-off point while avoiding shelves in a 20 x 20 grid.
 
-A **Tkinter GUI** visualizes the warehouse layout, robot movements, and learning progress in real-time.  
-The program supports dynamic layouts, Q-value heatmaps, and visualizations of learned paths.
+This group academic project was completed as part of the M.Sc. Artificial Intelligence programme at Jonkoping University, Sweden.
 
----
+## Problem
 
-##  Objectives  
-- Enable a robot to learn **optimal paths** in a grid-based warehouse.  
-- Avoid obstacles while minimizing travel distance and time.  
-- Demonstrate **adaptive learning** under changing warehouse layouts.  
-- Visualize training, reward convergence, and Q-value evolution.  
+Warehouse robots must find efficient routes while avoiding obstacles and adapting to changes in the environment. This project models the warehouse as a grid and uses tabular Q-learning to learn navigation policies through trial and error.
 
----
+The simulation contains:
 
-##  Core Concept — Q-Learning  
+- A configurable start position
+- A fixed pickup point
+- A configurable drop-off position
+- Shelf cells that act as obstacles
+- Four possible actions: up, right, down and left
 
-The robot (agent) interacts with its environment (warehouse grid), learns through **trial and error**, and updates its **Q-table** based on the **Bellman equation**:
+## Q-Learning Approach
 
-\[
-Q(s,a) \leftarrow Q(s,a) + \alpha \big[r + \gamma \max_{a'} Q(s',a') - Q(s,a)\big]
-\]
+The agent updates its action values using the Bellman equation:
 
-Where:  
-- **α (alpha)** – Learning rate (0.2)  
-- **γ (gamma)** – Discount factor (0.95)  
-- **ε (epsilon)** – Exploration probability (decays from 1.0 → 0.05)  
-
-Rewards are defined as:  
-| Action | Reward |
-|:--|:--|
-| Step | -1 |
-| Collision with obstacle/wall | -10 |
-| Goal reached | +50 |
-| Distance improvement | +0.2 × (Δ Manhattan distance) |
-
----
-
-##  Features  
--  Q-learning with linear epsilon decay  
--  20×20 customizable grid environment  
--  Dynamic obstacle generation and shuffling  
--  Two-phase training: **Start→Pickup** and **Pickup→Drop**  
--  Tkinter GUI with:  
-  - Obstacle visualization (shelves)  
-  - Q-value and visit-count heatmaps  
-  - Path overlays for trained routes  
-- Matplotlib plots for:  
-  - Episode reward progression  
-  - Q-value convergence diagnostics  
-
----
-
-## Project Structure  
-```
-warehouse_r1_images.py    # Main code file
-background.jpg            # Optional background image (in same folder)
-warehouse.png             # Shelf/obstacle icon (in same folder)
+```text
+Q(s,a) <- Q(s,a) + alpha * [r + gamma * max Q(s',a') - Q(s,a)]
 ```
 
----
+The main hyperparameters are:
 
-##  Dependencies  
-Make sure the following Python packages are installed:
+| Parameter | Value |
+|---|---:|
+| Learning rate (`alpha`) | 0.20 |
+| Discount factor (`gamma`) | 0.95 |
+| Initial exploration (`epsilon`) | 1.00 |
+| Final exploration (`epsilon`) | 0.05 |
+| Episodes per route phase | 1,500 |
+
+Exploration decreases linearly during training using an epsilon-greedy policy.
+
+## Reward Design
+
+| Event | Reward |
+|---|---:|
+| Every movement step | -1 |
+| Collision with a wall or shelf | -10 additional penalty |
+| Reaching the goal | +50 |
+| Moving closer to the goal | `0.2 x change in Manhattan distance` |
+
+## Training Pipeline
+
+Training is performed in two phases:
+
+1. Start position to pickup point
+2. Pickup point to drop-off position
+
+The interface displays the learned routes after training. Users can also shuffle the shelf layout, which resets the Q-table and allows the agent to learn in a modified environment.
+
+## Features
+
+- Tabular Q-learning implementation written with NumPy
+- Linear epsilon decay
+- Reward shaping based on Manhattan distance
+- Dynamically generated shelf layouts
+- Collision handling for shelves and grid boundaries
+- Tkinter graphical interface
+- Learned-path overlays
+- Q-value and visit-count heatmaps
+- Episode-reward and Q-value convergence plots
+
+## Verified Example Run
+
+Using the default random seeds, layout and coordinates, a test run successfully reached both goals:
+
+| Route | Learned path length |
+|---|---:|
+| Start `(1, 1)` to pickup `(0, 6)` | 7 grid positions |
+| Pickup `(0, 6)` to drop-off `(18, 18)` | 31 grid positions |
+
+The combined route required 36 movements. Results may vary if the layout, coordinates, random seed, hyperparameters or reward settings are changed.
+
+## Repository Structure
+
+```text
+Warehouse-Robot-Path-Optimization/
+|-- warehouse_q_learning.py
+|-- background.jpg
+|-- warehouse.png
+|-- requirements.txt
+|-- .gitignore
+`-- README.md
+```
+
+## Requirements
+
+- Python 3.9 or newer
+- Tkinter, normally included with standard Python installations
+
+Install the Python dependencies:
 
 ```bash
-pip install numpy matplotlib pillow
+pip install -r requirements.txt
 ```
 
-(`tkinter` comes pre-installed with Python on most systems.)
+On Linux, Tkinter may need to be installed separately using the operating system's package manager.
 
----
+## How to Run
 
-##  How to Run  
-1. **Ensure all required files** (`warehouse_r1_images.py`, images) are in the same folder.  
-2. Open a terminal in that directory.  
-3. Run the program:  
-   ```bash
-   python warehouse_r1_images.py
-   ```
-4. Use the GUI to:
-   - Set **Start** and **Drop** coordinates.  
-   - Click **Train Start→Pickup→Drop** to begin learning.  
-   - Toggle **Show Q Heatmap** or **Show Visit Heat** for visualization.  
-   - Use **Shuffle Layout** to randomize shelves and retrain.  
-   - Use **Clear Overlays** to reset paths.
+1. Download or clone this repository.
+2. Open a terminal in the repository folder.
+3. Install the dependencies.
+4. Run:
 
----
+```bash
+python warehouse_q_learning.py
+```
 
-##  Output Visualization  
-- **Per-episode reward curve:** Shows improvement in robot performance.  
-- **Q-value convergence plot:** Displays stabilization of learning.  
-- **Grid GUI:** Highlights shelves, start (S), pickup (P), and drop (D) points with color-coded paths.  
-- **Heatmaps:**  
-  - **Q Heatmap:** Indicates high-value routes.  
-  - **Visit Heat:** Shows exploration density during training.  
+In the application:
 
----
+1. Enter valid start and drop-off coordinates.
+2. Select **Train Start to Pickup to Drop**.
+3. Inspect the learned path, reward plot and convergence diagnostic.
+4. Use **Show Q Heatmap** or **Show Visit Heat** to explore the learned values.
+5. Select **Shuffle Layout** to generate a different obstacle arrangement and retrain.
 
-##  Experiment Setup  
-- Grid size: **20×20**  
-- Start: `(1, 1)`  
-- Pickup: `(0, 6)`  
-- Drop: `(18, 18)`  
-- Episodes per phase: **1500**  
-- Exploration: ε decays from **1.0 → 0.05**  
-- Step limit per episode: `6 * GRID_W * GRID_H // 5`  
+## Technology Stack
 
----
+- Python
+- NumPy
+- Tkinter
+- Matplotlib
+- Pillow
+- Reinforcement learning
+- Q-learning
 
-##  Results Summary  
-| Metric | Observation |
-|:--|:--|
-| Average Reward (final 100 episodes) | ~+45 to +50 |
-| Path length after convergence | ~65 steps (down from ~250) |
-| Collisions | Nearly 0 after training |
-| Convergence point | Around episode 1200 |
+## Current Limitations
 
-Robot successfully learns **efficient, collision-free navigation**, and adapts well when layouts change.
+- Tabular Q-learning does not scale efficiently to large or continuous state spaces.
+- The environment assumes perfect position information and does not model sensor noise.
+- The pickup location and reward parameters are configured in the source code.
+- Training occurs in the interface thread, so the GUI may be temporarily unresponsive.
+- The project models a simulation and is not connected to physical robot hardware.
+- Repeated runs can produce different results when seeds or layouts are changed.
 
----
+## Future Improvements
 
-##  Limitations  
-- Tabular Q-learning scales poorly for large or continuous environments.  
-- Training can be time-consuming (thousands of episodes).  
-- Reward parameters are fixed and may need tuning.  
-- Simulation assumes perfect location sensing (no sensor noise).  
+- Use separate Q-tables or goal-aware state representations for each route phase
+- Add repeatable evaluation across multiple random seeds
+- Compare Q-learning with A*, Dijkstra's algorithm and Deep Q-Networks
+- Add cycle detection and explicit success metrics for generated paths
+- Move training to a background thread to keep the interface responsive
+- Add multi-robot coordination and sensor-noise simulation
 
----
+## Authors
 
-##  Future Enhancements  
-- Implement **Deep Q-Networks (DQN)** for scalability.  
-- Add **multi-agent coordination** for multiple robots.  
-- Include **sensor noise modeling** and partial observability.  
-- Integrate with **real-world robot control systems**.  
+- Ameena Thanzoor
+- Jobsy Johnson
+- Manish Doddamane Nagaraju
+- Noufa Haneefa
 
----
+## References
 
-##  Authors  
-- **Ameena Thanzoor**  
-- **Jobsy Johnson**  
-- **Manish Doddamane Nagaraju**  
-- **Noufa Haneefa**  
-
----
-
-##  References  
-1. Watkins, C.J.C.H., & Dayan, P. (1992). *Technical Note: Q-Learning.* *Machine Learning*, 8(3–4), 279–292.  
-2. Sutton, R.S., & Barto, A.G. (2020). *Reinforcement Learning: An Introduction (2nd ed.).* MIT Press.  
-3. Peyas et al. (2021). *Autonomous Warehouse Robot using Deep Q-Learning.* IEEE TENCON.  
-4. Li et al. (2024). *Deep RL-based Obstacle Avoidance for Robot Movement in Warehouse Environments.* ICCASIT.
+1. Watkins, C. J. C. H., and Dayan, P. (1992). Q-learning. *Machine Learning*, 8, 279-292.
+2. Sutton, R. S., and Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.
